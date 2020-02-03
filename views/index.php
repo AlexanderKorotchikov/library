@@ -1,4 +1,4 @@
-<?php require_once('/views/header.php'); ?>
+<?php require_once(ROOT.'/views/header.php'); ?>
 <div class="forms">
     <div id="primary">
         <input type="button" name="as" value="Добавить автора" checked="" />
@@ -33,12 +33,12 @@
             <span>Дата, год выпуска</span> <input type="date" required name="date" id=""><br>
             <span>Авторы</span> <select name="authors[ ]" multiple required >
             <?php while ($row = $authors->fetch()){ ?>
-                <option value="<?=$row['id']?>"><?=$row['name']?> <?=$row['surname']?></option>
+                <option value="<?=$row['author_id']?>"><?=$row['author_name']?> <?=$row['author_surname']?></option>
             <?php }?>
             </select><br>
             <span>Жанры</span> <select name="genres[ ]" multiple required >
             <?php while ($row = $genre->fetch()){ ?>
-                <option value="<?=$row['id']?>"><?=$row['genre']?></option>
+                <option value="<?=$row['genre_id']?>"><?=$row['genre']?></option>
             <?php }?>
             </select><br>
             <input type="submit" value="Go" name="add_book">
@@ -47,4 +47,4 @@
     </div>
 </div>
 
-<?php require_once('/views/footer.php'); ?>
+<?php require_once(ROOT.'/views/footer.php'); ?>

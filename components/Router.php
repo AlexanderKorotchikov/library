@@ -24,7 +24,7 @@ class Router
 
 		foreach ($this->routes as $uriPattern => $path) {
 
-			if(preg_match("~$uriPattern~", $uri)) {
+			if(preg_match("~^$uriPattern$~", $uri)) {
 
 				// Получаем внутренний путь из внешнего согласно правилу.
 
@@ -38,7 +38,9 @@ class Router
 				
 				// имя метода
 				$actionName = 'action'.ucfirst(array_shift($segments));
-
+				// echo $internalRoute . '<br>';
+				// echo $controllerName . '<br>';
+				// echo $actionName . '<br>';
 				// список параметров
 				$parameters = $segments;
 

@@ -11,6 +11,7 @@ define('ROOT', dirname(__FILE__));
 define('NUM_BOOKS', 5);
 require_once(ROOT.'/components/Router.php');
 require_once(ROOT.'/components/Db.php');
+require_once(ROOT.'/controllers/Controller.php');
 
 // Вызор Router
 $router = new Router();

@@ -28,7 +28,7 @@ class Index
 	public static function addAuthor($data){
         $db = Db::getConnection();
         // var_dump($data);
-        $sql = "INSERT INTO author (name, surname, patronymic, date) VALUES (?,?,?,?)";
+        $sql = "INSERT INTO author (author_name, author_surname, author_patronymic, author_date) VALUES (?,?,?,?)";
         $stmt= $db->prepare($sql);
         $stmt->execute([$data['name'], $data['surname'], $data['patronymic'], $data['date']]);
 
@@ -60,22 +60,22 @@ class Index
     public static function addBook($data){
         $db = Db::getConnection();
         
-        $authors = '';
+        $sql = "INSERT INTO books (books_name, books_picture, books_description, books_date) VALUES (?,?,?,?)";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$data['name'], $data['picture'], $data['description'], $data['date']]);
+        $id = $db->lastInsertId();
+
         foreach($data['authors'] as $author){
-            if($authors == '') $authors = $author;
-            else $authors .= ',' . $author;
+            $sql = "INSERT INTO books_authors (book_id, author_id) VALUES (?,?)";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$id, $author]);
         }
 
-        $genres = '';
         foreach($data['genres'] as $genre){
-            if($genres == '') $genres = $genre;
-            else $genres .= ',' . $genre;
+            $sql = "INSERT INTO books_genres(book_id, genre_id) VALUES (?,?)";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$id, $genre]);
         }
-        // var_dump($data);
-        $sql = "INSERT INTO books (name, picture, description, date, authors_id, genres_id) VALUES (?,?,?,?,?,?)";
-        $stmt = $db->prepare($sql);
-        $stmt->execute([$data['name'], $data['picture'], $data['description'], $data['date'], $authors, $genres]);
-        
         if($stmt->rowCount() > 0) {
             return true;
         } else {

@@ -15,33 +15,42 @@ class Books
 		if ($id) {
 	
 			$db = Db::getConnection();
-			$result = $db->query("SELECT * FROM books WHERE id=$id");
-			/*$result->setFetchMode(PDO::FETCH_NUM);*/
-			$result->setFetchMode(PDO::FETCH_ASSOC);
-			$newsItem = $result->fetch();
+			$sth = $db->query("SELECT b.*, a.*, g.* 
+							FROM books as b 
+							RIGHT JOIN books_authors au 
+							ON(b.books_id = au.book_id) 
+							RIGHT JOIN books_genres bg 
+							ON (bg.book_id = b.books_id)
+							INNER JOIN genre g 
+							ON(bg.genre_id = g.genre_id)
+							INNER JOIN author a 
+							ON(au.author_id = a.author_id)
+							WHERE b.books_id <> 'NULL' AND b.books_id = $id");
+			$sth->setFetchMode(PDO::FETCH_ASSOC);
+			$sth = $sth->fetchAll();
 
-			$author_id = explode(',', $newsItem['authors_id']);
-			foreach ($author_id as $id){
-				$result2 = $db->query("SELECT * FROM author WHERE id=$id");
-				while($row = $result2->fetch()) {
-					$newsItem['authors'][] = [
-						'name' => $row['name'],
-						'surname' => $row['surname'],
-						'patronymic' => $row['patronymic'],
-						'date' => $row['date'],
-					];
-				}
+			foreach ($sth as $row){
+				$booksList['books_id'] = $row['books_id'];
+				$booksList['books_name'] = $row['books_name'];
+				$booksList['books_picture'] = '/uploads/'. $row['books_picture'];
+				$booksList['books_description'] = $row['books_description'];
+				$booksList['books_date'] = $row['books_date'];
+	
+				$booksList['authors'][] = [
+					'id' => $row['author_id'],
+					'name' => $row['author_name'],
+					'surname' => $row['author_surname'],
+					'patronymic' => $row['author_patronymic'],
+					'date' => $row['author_date'],
+				];
+				$booksList['genres'][] = [
+					'genre_id' => $row['genre_id'],
+					'genre' => $row['genre']
+				];
 			}
-			$genre_id = explode(',', $newsItem['genres_id']);
-			foreach ($genre_id as $id){
-				$result2 = $db->query("SELECT * FROM genre WHERE id=$id");
-				while($row = $result2->fetch()) {
-					$newsItem['genres'][] = $row['genre'];
-				}
-			}
-			$newsItem['picture'] = '/uploads/' . $newsItem['picture'];
-
-			return $newsItem;
+			$booksList = self::super_unique($booksList);
+			
+			return $booksList;
 		}
 
 	}
@@ -54,51 +63,94 @@ class Books
 		$db = Db::getConnection();
 		$booksList = array();
 
-		$result = $db->query('SELECT * FROM books LIMIT '. NUM_BOOKS*($page - 1).','.NUM_BOOKS * $page.'');
+		$sth = $db->query("SELECT b.*, a.*, g.* FROM 
+						(SELECT * FROM books  LIMIT ". NUM_BOOKS*($page - 1).','.NUM_BOOKS * $page.") as b 
+						RIGHT JOIN books_authors au 
+						ON(b.books_id = au.book_id) 
+						RIGHT JOIN books_genres bg 
+						ON (bg.book_id = b.books_id)
+						INNER JOIN genre g 
+						ON(bg.genre_id = g.genre_id)
+						INNER JOIN author a 
+						ON(au.author_id = a.author_id)
+						WHERE b.books_id <> 'NULL'
+						ORDER BY b.books_id ASC");
+		$sth->setFetchMode(PDO::FETCH_ASSOC);
+		$sth = $sth->fetchAll();
 
+		foreach ($sth as $row){
+			$booksList[$row['books_id']]['books_id'] = $row['books_id'];
+			$booksList[$row['books_id']]['books_name'] = $row['books_name'];
+			$booksList[$row['books_id']]['books_picture'] = '/uploads/'. $row['books_picture'];
+			$booksList[$row['books_id']]['books_description'] = $row['books_description'];
+			$booksList[$row['books_id']]['books_date'] = $row['books_date'];
+
+			$booksList[$row['books_id']]['authors'][] = [
+				'name' => $row['author_name'],
+				'surname' => $row['author_surname'],
+				'patronymic' => $row['author_patronymic'],
+				'date' => $row['author_date'],
+			];
+			$booksList[$row['books_id']]['genres'][] = [
+				'genre_id' => $row['genre_id'],
+				'genre' => $row['genre']
+			];
+		}
+		$booksList = self::super_unique($booksList);
 		$count_page = $db->query('SELECT Count(*) FROM books')->fetch();
 		$booksList['count_page'] = ceil((int)$count_page[0] / NUM_BOOKS);
 
-		$i = 0;
-		while($row = $result->fetch()) {
-			$booksList[$i]['id'] = $row['id'];
-			$booksList[$i]['name'] = $row['name'];
-			$booksList[$i]['picture'] = '/uploads/'. $row['picture'];
-			$booksList[$i]['description'] = $row['description'];
-			$booksList[$i]['date'] = $row['date'];
-			$authors[] = $row['authors_id'];
-			$genres[] = $row['genres_id'];
-			$i++;
-		}
-		$i = 0;
-		foreach($authors as $author){
-			$author_id = explode(',', $author);
-			foreach ($author_id as $id){
-				$result2 = $db->query("SELECT * FROM author WHERE id=$id");
-				while($row = $result2->fetch()) {
-					$data_author = [
-						'name' => $row['name'],
-						'surname' => $row['surname'],
-						'patronymic' => $row['patronymic'],
-						'date' => $row['date'],
-					];
-					$booksList[$i]['authors'][] = $data_author;
-				}
-			}
-			$i++;
-		}
-		$i = 0;
-		foreach($genres as $genre){
-			$genre_id = explode(',', $genre);
-			foreach ($genre_id as $id){
-				$result2 = $db->query("SELECT * FROM genre WHERE id=$id");
-				while($row = $result2->fetch()) {
-					$booksList[$i]['genres'][] = $row['genre'];
-				}
-			}
-			$i++;
-		}
 		return $booksList;
+	}
+
+	/** Убирает с массива повторяющиеся записи
+	* @rapam arrat &array
+	*/
+	public static function super_unique($array){
+		$result = array_map("unserialize", array_unique(array_map("serialize", $array)));
+
+		foreach ($result as $key => $value)
+		{
+			if ( is_array($value) )
+			{
+			$result[$key] = self::super_unique($value);
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Редактирование книги
+	 */
+	public static function editBook($id, $data){
+		$db = Db::getConnection();
+	
+		$sql = "UPDATE `books` SET `books_name`= ?, `books_picture`= ?, `books_description`= ?, `books_date`= ? WHERE `books_id` = ?";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$data['name'], $data['picture'], $data['description'], $data['date'], $id]);
+		
+		$db->query("DELETE FROM `books_authors` WHERE `book_id` = $id");
+		$db->query("DELETE FROM `books_genres` WHERE `book_id` = $id");
+		
+
+		foreach($data['authors'] as $author){
+            $sql = "INSERT INTO books_authors (book_id, author_id) VALUES (?,?)";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$id, $author]);
+        }
+        
+        foreach($data['genres'] as $genre){
+            $sql = "INSERT INTO books_genres(book_id, genre_id) VALUES (?,?)";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$id, $genre]);
+        }
+		
+        if($stmt->rowCount() > 0) {
+            return true;
+        } else {
+            return false;
+        }
 	}
 
 }

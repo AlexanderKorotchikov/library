@@ -1,18 +1,18 @@
-<?php require_once('/views/header.php'); ?>
+<?php require_once(ROOT.'/views/header.php'); ?>
 
 <?php foreach($booksList as $book){ ?>
-    <div id="book-<?=$book['id']?>" class="book">
-    <p><?=$book['name']?></p>
-    <a href="/books/<?=$book['id']?>"><img src="<?=$book['picture']?>" alt="q"></a>
-    <p><?=mb_strimwidth($book['description'], 0, 300, "...");?></p>
-    Дата издания: <span><?=$book['date']?></span><br>
+    <div id="book-<?=$book['books_id']?>" class="book">
+    <p><?=$book['books_name']?></p>
+    <a href="/books/<?=$book['books_id']?>"><img src="<?=$book['books_picture']?>" alt="q"></a>
+    <p><?=mb_strimwidth($book['books_description'], 0, 300, "...");?></p>
+    Дата издания: <span><?=$book['books_date']?></span><br>
     Автор(ы): <?php foreach($book['authors'] as $author){ ?>
         <span><?=$author['name']?> <?=$author['surname']?> <?=$author['patronymic']?> (<?=$author['date']?>)</span> |
     <?php } ?><hr>
     Жанр(ы): <?php foreach($book['genres'] as $genre){ ?>
-        <span><?=$genre?></span> | 
+        <span><?=$genre['genre']?></span> | 
     <?php } ?><br><hr>
-    <a href="/books/<?=$book['id']?>">читать</a>
+    <a href="/books/<?=$book['books_id']?>">читать</a>
     </div>
 <?php } ?>
 
@@ -26,4 +26,4 @@
 
 
 
-<?php require_once('/views/footer.php'); ?>
+<?php require_once(ROOT.'/views/footer.php'); ?>
